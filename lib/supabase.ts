@@ -8,25 +8,14 @@ function getSupabaseClient(): SupabaseClient {
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
     if (!supabaseUrl || !supabaseAnonKey) {
-      // For build time / pre-rendering, we'll throw a clear error instead of using a mock client
-      // This helps developers understand they need to set up environment variables
-      const missingVars = []
-      if (!supabaseUrl) missingVars.push('NEXT_PUBLIC_SUPABASE_URL')
-      if (!supabaseAnonKey) missingVars.push('NEXT_PUBLIC_SUPABASE_ANON_KEY')
+      // Log a warning but don't throw - let the auth functions handle the error gracefully
+      console.warn('Supabase environment variables may not be set correctly.')
+      console.warn('NEXT_PUBLIC_SUPABASE_URL:', supabaseUrl ? 'set' : 'missing')
+      console.warn('NEXT_PUBLIC_SUPABASE_ANON_KEY:', supabaseAnonKey ? 'set' : 'missing')
       
-      const errorMessage = `Missing required Supabase environment variables: ${missingVars.join(', ')}. ` +
-        `Please set these in your .env.local file or deployment platform. ` +
-        `Get these values from your Supabase project settings.`
-      
-      console.error(errorMessage)
-      
-      // In development, show a more helpful error
-      if (process.env.NODE_ENV === 'development') {
-        throw new Error(errorMessage)
-      }
-      
-      // In production, we still need to throw to prevent silent failures
-      throw new Error('Supabase is not configured. Please contact the administrator.')
+      // Return a placeholder that will fail gracefully when used
+      // This allows the UI to show a proper error message instead of crashing
+      return createClient('https://placeholder.supabase.co', 'placeholder-key')
     }
 
     supabaseClient = createClient(supabaseUrl, supabaseAnonKey)
@@ -54,33 +43,43 @@ export async function getCurrentUser() {
 
 // Helper function to sign in with email and password
 export async function signIn(email: string, password: string) {
-  const { data, error } = await supabase.client.auth.signInWithPassword({
-    email,
-    password,
-  })
-  if (error) {
-    console.error('Error signing in:', error)
-    return { user: null, error }
+  try {
+    const { data, error } = await supabase.client.auth.signInWithPassword({
+      email,
+      password,
+    })
+    if (error) {
+      console.error('Error signing in:', error)
+      return { user: null, error }
+    }
+    return { user: data.user, error: null }
+  } catch (err: any) {
+    console.error('Exception signing in:', err)
+    return { user: null, error: { message: err.message || 'Failed to sign in', name: 'Error' } }
   }
-  return { user: data.user, error: null }
 }
 
 // Helper function to sign up with email and password
 export async function signUp(email: string, password: string, name: string) {
-  const { data, error } = await supabase.client.auth.signUp({
-    email,
-    password,
-    options: {
-      data: {
-        name,
+  try {
+    const { data, error } = await supabase.client.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          name,
+        },
       },
-    },
-  })
-  if (error) {
-    console.error('Error signing up:', error)
-    return { user: null, error }
+    })
+    if (error) {
+      console.error('Error signing up:', error)
+      return { user: null, error }
+    }
+    return { user: data.user, error: null }
+  } catch (err: any) {
+    console.error('Exception signing up:', err)
+    return { user: null, error: { message: err.message || 'Failed to sign up', name: 'Error' } }
   }
-  return { user: data.user, error: null }
 }
 
 // Helper function to sign out

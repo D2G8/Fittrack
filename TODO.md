@@ -1,8 +1,11 @@
-# TODO - Update useProfile hook and register page
+# TODO - Logout Button Implementation
 
-## Tasks:
-- [x] 1. Add createProfile function to lib/supabase.ts
-- [x] 2. Update useProfile hook in lib/store.ts to fetch from database
-- [x] 3. Update app/register/page.tsx to create profile after signup
+## Plan:
+- [x] Modify `app/page.tsx` to check auth state and show logout button when logged in
 
-## Status: Completed
+## Changes:
+- [x] Import getCurrentUser and signOut from lib/supabase
+- [x] Add useEffect to check user auth state on mount
+- [x] Show "Logout" button when user is logged in
+- [x] Show "Login" button when user is NOT logged in
+- [x] Handle logout click to call signOut() and refresh
