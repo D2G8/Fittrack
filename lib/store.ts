@@ -124,7 +124,7 @@ export const defaultProfile: UserProfile = {
   age: 20,
   weight: 82,
   targetWeight: 75,
-  objective: "Build Muscle",
+  objective: "",
   profilePicture: "",
   level: 7,
   xp: 2340,
