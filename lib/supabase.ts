@@ -201,17 +201,25 @@ export async function updateProfile(userId: string, updates: Partial<Profile>): 
 }
 
 // Helper function to create a new profile in the database
-export async function createProfile(userId: string, email: string, name: string): Promise<Profile | null> {
+export async function createProfile(
+  userId: string, 
+  email: string, 
+  name: string,
+  age: number,
+  weight: number,
+  targetWeight: number,
+  objective: string
+): Promise<Profile | null> {
   const { data, error } = await supabase.client
     .from('profiles')
     .insert({
       id: userId,
       email,
       name,
-      age: 25,
-      weight: 70,
-      target_weight: 70,
-      objective: 'Build Muscle',
+      age,
+      weight,
+      target_weight: targetWeight,
+      objective,
       profile_picture: '',
       level: 1,
       xp: 0,

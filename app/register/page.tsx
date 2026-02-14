@@ -4,7 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Eye, EyeOff, ArrowLeft, Dumbbell } from "lucide-react"
-import { signUp } from "@/lib/supabase"
+import { signUp, createProfile } from "@/lib/supabase"
 
 const objectives = [
   { value: "Build Muscle", label: "Build Muscle" },
@@ -97,7 +97,17 @@ export default function RegisterPage() {
     }
 
     if (user) {
-      // Profile is automatically created by Supabase trigger
+      // Create profile manually after successful signup
+      // (trigger might not be working)
+      await createProfile(
+        user.id, 
+        form.email, 
+        form.name,
+        parseInt(form.age),
+        parseFloat(form.weight),
+        parseFloat(form.targetWeight),
+        form.objective
+      )
       router.push("/")
       router.refresh()
     }

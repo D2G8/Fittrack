@@ -1,16 +1,13 @@
 "use client"
 
-import { useProfile, useExercisePlans, getTodaysPlan } from "@/lib/store"
+import { useExercisePlans, getTodaysPlan } from "@/lib/store"
 import { CheckCircle2, Circle, Dumbbell } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 export function TodaysWorkout() {
   // useProfile obtém automaticamente o profile do utilizador atual da Supabase
-  const { profile } = useProfile()
+  const { plans, toggleExercise } = useExercisePlans()
   
-  // Passar o profile para useExercisePlans - os planos são gerados baseados no objetivo do user
-  const { plans, toggleExercise } = useExercisePlans(profile)
-
   console.log(plans)
   console.log(toggleExercise)
   
