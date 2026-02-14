@@ -8,13 +8,29 @@ function getSupabaseClient(): SupabaseClient {
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
     if (!supabaseUrl || !supabaseAnonKey) {
-      // Return a mock client for build time / pre-rendering
-      // This prevents the "supabaseUrl is required" error during prerendering
-      console.warn('Supabase environment variables are not set. Using mock client.')
-      return createClient('https://placeholder.supabase.co', 'placeholder-key')
+      // For build time / pre-rendering, we'll throw a clear error instead of using a mock client
+      // This helps developers understand they need to set up environment variables
+      const missingVars = []
+      if (!supabaseUrl) missingVars.push('NEXT_PUBLIC_SUPABASE_URL')
+      if (!supabaseAnonKey) missingVars.push('NEXT_PUBLIC_SUPABASE_ANON_KEY')
+      
+      const errorMessage = `Missing required Supabase environment variables: ${missingVars.join(', ')}. ` +
+        `Please set these in your .env.local file or deployment platform. ` +
+        `Get these values from your Supabase project settings.`
+      
+      console.error(errorMessage)
+      
+      // In development, show a more helpful error
+      if (process.env.NODE_ENV === 'development') {
+        throw new Error(errorMessage)
+      }
+      
+      // In production, we still need to throw to prevent silent failures
+      throw new Error('Supabase is not configured. Please contact the administrator.')
     }
 
     supabaseClient = createClient(supabaseUrl, supabaseAnonKey)
+    console.log('Supabase client initialized successfully')
   }
   return supabaseClient
 }
