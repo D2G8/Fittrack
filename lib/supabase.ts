@@ -98,8 +98,11 @@ export async function signUp(
   name: string,
   age: number,
   weight: number,
+  height: number,
   targetWeight: number,
-  objective: string
+  objective: string,
+  workoutFrequency: string,
+  workoutLocation: string
 ) {
   try {
     const { data, error } = await supabase.client.auth.signUp({
@@ -110,8 +113,11 @@ export async function signUp(
           name,
           age,
           weight,
+          height,
           targetWeight,
           objective,
+          workoutFrequency,
+          workoutLocation,
         },
       },
     })
@@ -150,8 +156,11 @@ export interface Profile {
   email: string
   age: number
   weight: number
+  height: number
   target_weight: number
   objective: string
+  workout_frequency: string
+  workout_location: string
   profile_picture: string
   level: number
   xp: number

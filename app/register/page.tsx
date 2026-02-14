@@ -12,6 +12,18 @@ const objectives = [
   { value: "Maintain Weight", label: "Maintain Weight" },
 ]
 
+const workoutFrequencies = [
+  { value: "1-2", label: "1-2 times/week" },
+  { value: "3-4", label: "3-4 times/week" },
+  { value: "5+", label: "5+ times/week" },
+]
+
+const workoutLocations = [
+  { value: "gym", label: "Gym" },
+  { value: "home", label: "Home" },
+  { value: "both", label: "Both" },
+]
+
 export default function RegisterPage() {
   const router = useRouter()
   const [form, setForm] = useState({ 
@@ -21,8 +33,11 @@ export default function RegisterPage() {
     confirmPassword: "",
     age: "",
     weight: "",
+    height: "",
     targetWeight: "",
-    objective: "Build Muscle"
+    objective: "Build Muscle",
+    workoutFrequency: "3-4",
+    workoutLocation: "gym"
   })
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
@@ -54,6 +69,10 @@ export default function RegisterPage() {
       setError("Please enter a valid target weight")
       return
     }
+    if (!form.height || parseFloat(form.height) < 100 || parseFloat(form.height) > 250) {
+      setError("Please enter a valid height")
+      return
+    }
 
     setIsLoading(true)
     setError("")
@@ -64,8 +83,11 @@ export default function RegisterPage() {
       form.name,
       parseInt(form.age),
       parseFloat(form.weight),
+      parseFloat(form.height),
       parseFloat(form.targetWeight),
-      form.objective
+      form.objective,
+      form.workoutFrequency,
+      form.workoutLocation
     )
 
     if (signUpError) {
@@ -182,7 +204,7 @@ export default function RegisterPage() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <div>
                 <label htmlFor="age" className="mb-1.5 block text-sm font-medium text-foreground">
                   Age
@@ -214,12 +236,27 @@ export default function RegisterPage() {
                   className="w-full rounded-lg border border-border bg-card px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-foreground focus:outline-none"
                 />
               </div>
+              <div>
+                <label htmlFor="height" className="mb-1.5 block text-sm font-medium text-foreground">
+                  Height (cm)
+                </label>
+                <input
+                  id="height"
+                  type="number"
+                  min="100"
+                  max="250"
+                  value={form.height}
+                  onChange={(e) => updateField("height", e.target.value)}
+                  placeholder="170"
+                  className="w-full rounded-lg border border-border bg-card px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-foreground focus:outline-none"
+                />
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label htmlFor="targetWeight" className="mb-1.5 block text-sm font-medium text-foreground">
-                  Target Weight (kg)
+                  Weight Goal (kg)
                 </label>
                 <input
                   id="targetWeight"
@@ -246,6 +283,43 @@ export default function RegisterPage() {
                   {objectives.map((obj) => (
                     <option key={obj.value} value={obj.value}>
                       {obj.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="workoutFrequency" className="mb-1.5 block text-sm font-medium text-foreground">
+                  How many times a week do you workout?
+                </label>
+                <select
+                  id="workoutFrequency"
+                  value={form.workoutFrequency}
+                  onChange={(e) => updateField("workoutFrequency", e.target.value)}
+                  className="w-full rounded-lg border border-border bg-card px-4 py-2.5 text-sm text-foreground focus:border-foreground focus:outline-none"
+                >
+                  {workoutFrequencies.map((freq) => (
+                    <option key={freq.value} value={freq.value}>
+                      {freq.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label htmlFor="workoutLocation" className="mb-1.5 block text-sm font-medium text-foreground">
+                  Do you have access to a home gym?
+                </label>
+                <select
+                  id="workoutLocation"
+                  value={form.workoutLocation}
+                  onChange={(e) => updateField("workoutLocation", e.target.value)}
+                  className="w-full rounded-lg border border-border bg-card px-4 py-2.5 text-sm text-foreground focus:border-foreground focus:outline-none"
+                >
+                  {workoutLocations.map((loc) => (
+                    <option key={loc.value} value={loc.value}>
+                      {loc.label}
                     </option>
                   ))}
                 </select>
