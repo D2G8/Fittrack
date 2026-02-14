@@ -85,13 +85,7 @@ export const defaultProfile: UserProfile = {
   xp: 2340,
   xpToNextLevel: 3000,
 }
-// import <- 
-// 
-// 
-// 
-// 
-// 
-// 
+
 
 const defaultMissions: Mission[] = [
   { id: "m1", title: "Complete Chest Day", description: "Finish your chest workout today", xpReward: 150, completed: false, type: "exercise" },
@@ -217,37 +211,11 @@ export function useMissions() {
   }
 }
 
-// export function useExercisePlans() { // FUNÇAO QUE TIRA AS COISAS E LEVAM ELA PRO """frontend""" com mts aspas
-//   const { data, error } = useSWR<ExercisePlan[]>("exercisePlans", fetcher("exercisePlans", defaultExercisePlans))
-//   return {
-//     plans: data ?? defaultExercisePlans,
-//     isLoading: !data && !error,
-//     addPlan: (plan: ExercisePlan) => {
-//       mutate("exercisePlans", [...(data ?? defaultExercisePlans), plan], false)
-//     },
-//     updatePlan: (planId: string, updates: Partial<ExercisePlan>) => {
-//       const current = data ?? defaultExercisePlans
-//       mutate("exercisePlans", current.map(p => p.id === planId ? { ...p, ...updates } : p), false)
-//     },
-//     deletePlan: (planId: string) => {
-//       const current = data ?? defaultExercisePlans
-//       mutate("exercisePlans", current.filter(p => p.id !== planId), false)
-//     },
-//     toggleExercise: (planId: string, exerciseId: string) => {
-//       const current = data ?? defaultExercisePlans
-//       mutate("exercisePlans", current.map(p =>
-//         p.id === planId
-//           ? { ...p, exercises: p.exercises.map(e => e.id === exerciseId ? { ...e, completed: !e.completed } : e) }
-//           : p
-//       ), false)
-//     },
-//   }
-// }
 
 export function useExercisePlans(user?: UserProfile) {
 
 
-  const safeUser = user ?? defaultProfile; // ← AQUI
+  const safeUser = user ?? defaultProfile; 
 
 
   const generatedPlans = generatePlans(safeUser);
