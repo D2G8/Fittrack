@@ -12,7 +12,7 @@ export default function HomePage() {
     <div className="min-h-screen bg-background pb-24">
       <header className="sticky top-0 z-40 border-b border-border bg-card/95 backdrop-blur-md">
         <div className="mx-auto flex max-w-lg items-center justify-between px-4 py-3">
-          <h1 className="font-display text-xl font-bold text-foreground">FitTrack</h1>
+          <h1 className="font-display text-xl font-bold text-foreground">Nutrium</h1>
           <div className="flex items-center gap-2">
             <Link
               href="/login"

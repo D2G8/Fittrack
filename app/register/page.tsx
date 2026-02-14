@@ -4,14 +4,16 @@ import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Eye, EyeOff, ArrowLeft, Dumbbell } from "lucide-react"
+import { signUp, createProfile } from "@/lib/supabase"
 
 export default function RegisterPage() {
   const router = useRouter()
   const [form, setForm] = useState({ name: "", email: "", password: "", confirmPassword: "" })
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!form.name || !form.email || !form.password || !form.confirmPassword) {
       setError("Please fill in all fields")
@@ -25,7 +27,25 @@ export default function RegisterPage() {
       setError("Password must be at least 8 characters")
       return
     }
-    router.push("/")
+
+    setIsLoading(true)
+    setError("")
+
+    const { user, error: signUpError } = await signUp(form.email, form.password, form.name)
+
+    if (signUpError) {
+      setError(signUpError.message)
+      setIsLoading(false)
+      return
+    }
+
+    if (user) {
+      // Create profile after successful signup
+      await createProfile(user.id, form.email, form.name)
+      router.push("/")
+      router.refresh()
+    }
+    setIsLoading(false)
   }
 
   const updateField = (field: string, value: string) => {

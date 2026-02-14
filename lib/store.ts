@@ -1,4 +1,6 @@
-import useSWR, { mutate } from "swr"
+  import useSWR, { mutate } from "swr"
+import { getCurrentUser, getProfile, updateProfile as updateProfileInDb, Profile as DbProfile } from "./supabase"
+import { User } from "@supabase/supabase-js"
 
 // ===== TYPES =====
 export interface UserProfile {
@@ -11,6 +13,22 @@ export interface UserProfile {
   level: number
   xp: number
   xpToNextLevel: number
+}
+
+// Helper to convert database Profile to UserProfile
+function convertToUserProfile(dbProfile: DbProfile | null): UserProfile | null {
+  if (!dbProfile) return null
+  return {
+    name: dbProfile.name,
+    age: dbProfile.age,
+    weight: dbProfile.weight,
+    targetWeight: dbProfile.target_weight,
+    objective: dbProfile.objective,
+    profilePicture: dbProfile.profile_picture,
+    level: dbProfile.level,
+    xp: dbProfile.xp,
+    xpToNextLevel: dbProfile.xp_to_next_level,
+  }
 }
 
 export interface Mission {
@@ -186,12 +204,54 @@ const fetcher = <T>(key: string, defaultData: T) => (): T => {
 }
 
 export function useProfile() {
-  const { data, error } = useSWR<UserProfile>("profile", fetcher("profile", defaultProfile))
+  // Fetch profile from database using SWR
+  const { data, error, isLoading } = useSWR<UserProfile>("profile", async () => {
+    // Get the current user
+    const user = await getCurrentUser()
+    if (!user) {
+      console.log("No user found, returning default profile")
+      return defaultProfile
+    }
+    
+    // Get the profile from database
+    const dbProfile = await getProfile(user.id)
+    if (!dbProfile) {
+      console.log("No profile found in database, returning default profile")
+      return defaultProfile
+    }
+    
+    // Convert database profile to UserProfile
+    return convertToUserProfile(dbProfile) ?? defaultProfile
+  })
+
   return {
     profile: data ?? defaultProfile,
-    isLoading: !data && !error,
-    updateProfile: (updates: Partial<UserProfile>) => {
-      mutate("profile", { ...(data ?? defaultProfile), ...updates }, false)
+    isLoading: isLoading,
+    updateProfile: async (updates: Partial<UserProfile>) => {
+      // Get current user
+      const user = await getCurrentUser()
+      if (!user) {
+        console.error("No user found for update")
+        return
+      }
+      
+      // Update in database
+      const updatedProfile = await updateProfileInDb(user.id, {
+        name: updates.name,
+        age: updates.age,
+        weight: updates.weight,
+        target_weight: updates.targetWeight,
+        objective: updates.objective,
+        profile_picture: updates.profilePicture,
+        level: updates.level,
+        xp: updates.xp,
+        xp_to_next_level: updates.xpToNextLevel,
+      })
+      
+      if (updatedProfile) {
+        // Update local cache
+        mutate("profile", convertToUserProfile(updatedProfile), false)
+      }
     },
   }
 }

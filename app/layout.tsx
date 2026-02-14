@@ -7,8 +7,11 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], variable: '--font-space-grotesk' })
 
 export const metadata: Metadata = {
-  title: 'FitTrack - Your Fitness Companion',
+  title: 'nutriUM',
   description: 'Track your workouts, nutrition, and progress all in one place.',
+  icons: {
+    icon: '/transferir-_1_.svg',
+  },
 }
 
 export const viewport: Viewport = {

@@ -99,9 +99,9 @@ export function PlanEditor() {
             key={plan.id}
             className="rounded-xl border border-exercise-primary/10 bg-exercise-bg/50 overflow-hidden"
           >
-            <button
+            <div
               onClick={() => setExpandedPlan(expandedPlan === plan.id ? null : plan.id)}
-              className="flex w-full items-center justify-between p-3.5 text-left"
+              className="flex w-full items-center justify-between p-3.5 text-left cursor-pointer"
             >
               <div>
                 <p className="text-sm font-semibold text-foreground">{plan.name}</p>
@@ -123,7 +123,7 @@ export function PlanEditor() {
                   <ChevronDown className="h-4 w-4 text-exercise-muted" />
                 )}
               </div>
-            </button>
+            </div>
 
             {expandedPlan === plan.id && (
               <div className="border-t border-exercise-primary/10 p-3.5">

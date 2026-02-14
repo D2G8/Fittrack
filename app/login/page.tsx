@@ -4,6 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Eye, EyeOff, ArrowLeft, Dumbbell } from "lucide-react"
+import { signIn } from "@/lib/supabase"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -11,14 +12,31 @@ export default function LoginPage() {
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!email || !password) {
       setError("Please fill in all fields")
       return
     }
-    router.push("/")
+
+    setIsLoading(true)
+    setError("")
+
+    const { user, error: signInError } = await signIn(email, password)
+
+    if (signInError) {
+      setError(signInError.message)
+      setIsLoading(false)
+      return
+    }
+
+    if (user) {
+      router.push("/")
+      router.refresh()
+    }
+    setIsLoading(false)
   }
 
   return (
