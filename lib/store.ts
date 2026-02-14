@@ -40,6 +40,9 @@ export interface UserProfile { // aqui é oq cada perfil tem
   level: number
   xp: number
   xpToNextLevel: number
+  height: number
+  workoutFrequency: string
+  workoutLocation: string
 }
 
 // Helper to convert database Profile to UserProfile
@@ -55,6 +58,9 @@ function convertToUserProfile(dbProfile: DbProfile | null): UserProfile | null {
     level: dbProfile.level,
     xp: dbProfile.xp,
     xpToNextLevel: dbProfile.xp_to_next_level,
+    height: dbProfile.height,
+    workoutFrequency: dbProfile.workout_frequency,
+    workoutLocation: dbProfile.workout_location,
   }
 }
 
@@ -129,6 +135,9 @@ export const defaultProfile: UserProfile = {
   level: 7,
   xp: 2340,
   xpToNextLevel: 3000,
+  height: 170,
+  workoutFrequency: "3-4",
+  workoutLocation: "gym",
 }
 
 
@@ -275,6 +284,9 @@ export function useProfile() {
         level: updates.level,
         xp: updates.xp,
         xp_to_next_level: updates.xpToNextLevel,
+        height: updates.height,
+        workout_frequency: updates.workoutFrequency,
+        workout_location: updates.workoutLocation,
       })
       
       if (updatedProfile) {
