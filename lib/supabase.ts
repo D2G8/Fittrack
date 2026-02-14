@@ -1,13 +1,34 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient, SupabaseClient } from '@supabase/supabase-js'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+let supabaseClient: SupabaseClient | null = null
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+function getSupabaseClient(): SupabaseClient {
+  if (!supabaseClient) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      // Return a mock client for build time / pre-rendering
+      // This prevents the "supabaseUrl is required" error during prerendering
+      console.warn('Supabase environment variables are not set. Using mock client.')
+      return createClient('https://placeholder.supabase.co', 'placeholder-key')
+    }
+
+    supabaseClient = createClient(supabaseUrl, supabaseAnonKey)
+  }
+  return supabaseClient
+}
+
+// Export a proxy object that lazily initializes the client
+export const supabase = {
+  get client() {
+    return getSupabaseClient()
+  }
+}
 
 // Helper function to get current user
 export async function getCurrentUser() {
-  const { data: { user }, error } = await supabase.auth.getUser()
+  const { data: { user }, error } = await supabase.client.auth.getUser()
   if (error) {
     console.error('Error getting current user:', error)
     return null
@@ -17,7 +38,7 @@ export async function getCurrentUser() {
 
 // Helper function to sign in with email and password
 export async function signIn(email: string, password: string) {
-  const { data, error } = await supabase.auth.signInWithPassword({
+  const { data, error } = await supabase.client.auth.signInWithPassword({
     email,
     password,
   })
@@ -30,7 +51,7 @@ export async function signIn(email: string, password: string) {
 
 // Helper function to sign up with email and password
 export async function signUp(email: string, password: string, name: string) {
-  const { data, error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.client.auth.signUp({
     email,
     password,
     options: {
@@ -48,7 +69,7 @@ export async function signUp(email: string, password: string, name: string) {
 
 // Helper function to sign out
 export async function signOut() {
-  const { error } = await supabase.auth.signOut()
+  const { error } = await supabase.client.auth.signOut()
   if (error) {
     console.error('Error signing out:', error)
     return { error }
@@ -58,7 +79,7 @@ export async function signOut() {
 
 // Helper function to listen to auth changes
 export function onAuthStateChange(callback: (event: string, session: any) => void) {
-  return supabase.auth.onAuthStateChange(callback)
+  return supabase.client.auth.onAuthStateChange(callback)
 }
 
 // ===== PROFILE FUNCTIONS =====
@@ -82,7 +103,7 @@ export interface Profile {
 
 // Helper function to get profile from database
 export async function getProfile(userId: string): Promise<Profile | null> {
-  const { data, error } = await supabase
+  const { data, error } = await supabase.client
     .from('profiles')
     .select('*')
     .eq('id', userId)
@@ -97,7 +118,7 @@ export async function getProfile(userId: string): Promise<Profile | null> {
 
 // Helper function to update profile in database
 export async function updateProfile(userId: string, updates: Partial<Profile>): Promise<Profile | null> {
-  const { data, error } = await supabase
+  const { data, error } = await supabase.client
     .from('profiles')
     .update(updates)
     .eq('id', userId)
@@ -113,7 +134,7 @@ export async function updateProfile(userId: string, updates: Partial<Profile>): 
 
 // Helper function to create a new profile in the database
 export async function createProfile(userId: string, email: string, name: string): Promise<Profile | null> {
-  const { data, error } = await supabase
+  const { data, error } = await supabase.client
     .from('profiles')
     .insert({
       id: userId,
