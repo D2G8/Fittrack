@@ -1,11 +1,14 @@
-# TODO - Logout Button Implementation
+# TODO - Connect Exercise Page to Supabase
 
-## Plan:
-- [x] Modify `app/page.tsx` to check auth state and show logout button when logged in
+## Status: IN PROGRESS
 
-## Changes:
-- [x] Import getCurrentUser and signOut from lib/supabase
-- [x] Add useEffect to check user auth state on mount
-- [x] Show "Logout" button when user is logged in
-- [x] Show "Login" button when user is NOT logged in
-- [x] Handle logout click to call signOut() and refresh
+## Tasks:
+- [x] Analyze current state of exercise components and store
+- [ ] Add addExercise/removeExercise functions to useExercisePlans hook in lib/store.ts
+- [ ] Connect useTrainingLogs to database (addLog, deleteLog)
+- [ ] Update PlanEditor to use DB-connected functions
+- [ ] Test the integration
+
+## Notes:
+- lib/supabase.ts already has all the needed database functions
+- Most of the integration is already in place, just need to add missing pieces

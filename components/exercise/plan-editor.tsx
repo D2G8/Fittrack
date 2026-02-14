@@ -9,7 +9,7 @@ const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"
 const BODY_PARTS = ["chest", "back", "shoulders", "arms", "legs", "core"]
 
 export function PlanEditor() {
-  const { plans, addPlan, updatePlan, deletePlan } = useExercisePlans()
+  const { plans, addPlan, updatePlan, deletePlan, addExercise, removeExercise } = useExercisePlans()
   const [editingPlan, setEditingPlan] = useState<string | null>(null)
   const [expandedPlan, setExpandedPlan] = useState<string | null>(null)
   const [showAddForm, setShowAddForm] = useState(false)

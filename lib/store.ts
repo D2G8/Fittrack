@@ -1,5 +1,32 @@
-  import useSWR, { mutate } from "swr"
-import { getCurrentUser, getProfile, updateProfile as updateProfileInDb, Profile as DbProfile } from "./supabase"
+import useSWR, { mutate } from "swr"
+import { 
+  getCurrentUser, 
+  getProfile, 
+  updateProfile as updateProfileInDb, 
+  Profile as DbProfile,
+  getExercisePlans as getExercisePlansFromDb,
+  createExercisePlan as createExercisePlanInDb,
+  updateExercisePlan as updateExercisePlanInDb,
+  deleteExercisePlan as deleteExercisePlanInDb,
+  addExercise as addExerciseToDb,
+  updateExercise as updateExerciseInDb,
+  deleteExercise as deleteExerciseFromDb,
+  toggleExerciseCompletion as toggleExerciseInDb,
+  getTrainingLogs as getTrainingLogsFromDb,
+  createTrainingLog as createTrainingLogInDb,
+  deleteTrainingLog as deleteTrainingLogFromDb,
+  ExercisePlanWithExercises,
+  TrainingLogWithExercises,
+  getNutritionPlans as getNutritionPlansFromDb,
+  createNutritionPlan as createNutritionPlanInDb,
+  updateNutritionPlan as updateNutritionPlanInDb,
+  deleteNutritionPlan as deleteNutritionPlanInDb,
+  getDailyNutrition as getDailyNutritionFromDb,
+  addMealEntry as addMealEntryToDb,
+  deleteMealEntry as deleteMealEntryFromDb,
+  NutritionPlanWithMeals,
+  DailyNutritionWithEntries
+} from "./supabase"
 import { User } from "@supabase/supabase-js"
 
 // ===== TYPES =====
@@ -273,37 +300,165 @@ export function useMissions() {
 
 
 export function useExercisePlans(user?: UserProfile) {
+  const safeUser = user ?? defaultProfile
+  const generatedPlans = generatePlans(safeUser)
 
-
-  const safeUser = user ?? defaultProfile; 
-
-
-  const generatedPlans = generatePlans(safeUser);
-
-  const { data, error } = useSWR<ExercisePlan[]>(
+  const { data, error, isLoading } = useSWR<ExercisePlan[]>(
     "exercisePlans",
-    () => generatedPlans
-  );
+    async () => {
+      // Get current user
+      const currentUser = await getCurrentUser()
+      if (!currentUser) {
+        console.log("No user found, returning generated plans")
+        return generatedPlans
+      }
+      
+      // Fetch from database
+      const dbPlans = await getExercisePlansFromDb(currentUser.id)
+      
+      if (!dbPlans || dbPlans.length === 0) {
+        console.log("No plans found in database, returning generated plans")
+        return generatedPlans
+      }
+      
+      // Convert database plans to ExercisePlan format
+      return dbPlans.map((plan: ExercisePlanWithExercises) => ({
+        id: plan.id,
+        name: plan.name,
+        dayOfWeek: plan.dayOfWeek,
+        exercises: plan.exercises.map(e => ({
+          id: e.id,
+          name: e.name,
+          sets: e.sets,
+          reps: e.reps,
+          weight: e.weight,
+          bodyPart: e.bodyPart,
+          completed: e.completed,
+        }))
+      }))
+    },
+    {
+      fallbackData: generatedPlans,
+    }
+  )
 
   return {
     plans: data ?? generatedPlans,
     isLoading: !data && !error,
-    addPlan: (plan: ExercisePlan) => {
-      mutate("exercisePlans", [...(data ?? generatedPlans), plan], false)
+    addPlan: async (plan: ExercisePlan) => {
+      const currentUser = await getCurrentUser()
+      if (!currentUser) {
+        console.error("No user found for adding plan")
+        return
+      }
+      
+      // Save to database
+      const dbPlan = await createExercisePlanInDb(currentUser.id, {
+        name: plan.name,
+        dayOfWeek: plan.dayOfWeek,
+        exercises: plan.exercises.map(e => ({
+          name: e.name,
+          sets: e.sets,
+          reps: e.reps,
+          weight: e.weight,
+          bodyPart: e.bodyPart,
+        }))
+      })
+      
+      if (dbPlan) {
+        // Update local cache with the new plan from database
+        const newPlan: ExercisePlan = {
+          id: dbPlan.id,
+          name: dbPlan.name,
+          dayOfWeek: dbPlan.dayOfWeek,
+          exercises: dbPlan.exercises.map(e => ({
+            id: e.id,
+            name: e.name,
+            sets: e.sets,
+            reps: e.reps,
+            weight: e.weight,
+            bodyPart: e.bodyPart,
+            completed: e.completed,
+          }))
+        }
+        mutate("exercisePlans", [...(data ?? generatedPlans), newPlan], false)
+      }
     },
-    updatePlan: (planId: string, updates: Partial<ExercisePlan>) => {
-      const current = data ?? generatedPlans;
+    updatePlan: async (planId: string, updates: Partial<ExercisePlan>) => {
+      // Update in database
+      await updateExercisePlanInDb(planId, {
+        name: updates.name,
+        dayOfWeek: updates.dayOfWeek,
+      })
+      
+      // Update local cache
+      const current = data ?? generatedPlans
       mutate("exercisePlans", current.map(p => p.id === planId ? { ...p, ...updates } : p), false)
     },
-    deletePlan: (planId: string) => {
-      const current = data ?? generatedPlans;
+    deletePlan: async (planId: string) => {
+      // Delete from database
+      await deleteExercisePlanInDb(planId)
+      
+      // Update local cache
+      const current = data ?? generatedPlans
       mutate("exercisePlans", current.filter(p => p.id !== planId), false)
     },
-    toggleExercise: (planId: string, exerciseId: string) => {
-      const current = data ?? generatedPlans;
+    toggleExercise: async (planId: string, exerciseId: string) => {
+      // Toggle in database
+      await toggleExerciseInDb(exerciseId)
+      
+      // Update local cache
+      const current = data ?? generatedPlans
       mutate("exercisePlans", current.map(p =>
         p.id === planId
           ? { ...p, exercises: p.exercises.map(e => e.id === exerciseId ? { ...e, completed: !e.completed } : e) }
+          : p
+      ), false)
+    },
+    addExercise: async (planId: string, exercise: Omit<Exercise, "id" | "completed">) => {
+      const currentUser = await getCurrentUser()
+      if (!currentUser) {
+        console.error("No user found for adding exercise")
+        return
+      }
+      
+      // Add to database
+      const dbExercise = await addExerciseToDb(planId, currentUser.id, {
+        name: exercise.name,
+        sets: exercise.sets,
+        reps: exercise.reps,
+        weight: exercise.weight,
+        bodyPart: exercise.bodyPart,
+      })
+      
+      if (dbExercise) {
+        // Update local cache with the new exercise from database
+        const current = data ?? generatedPlans
+        const newExercise: Exercise = {
+          id: dbExercise.id,
+          name: dbExercise.name,
+          sets: dbExercise.sets,
+          reps: dbExercise.reps,
+          weight: dbExercise.weight,
+          bodyPart: dbExercise.body_part,
+          completed: dbExercise.completed,
+        }
+        mutate("exercisePlans", current.map(p =>
+          p.id === planId
+            ? { ...p, exercises: [...p.exercises, newExercise] }
+            : p
+        ), false)
+      }
+    },
+    removeExercise: async (planId: string, exerciseId: string) => {
+      // Delete from database
+      await deleteExerciseFromDb(exerciseId)
+      
+      // Update local cache
+      const current = data ?? generatedPlans
+      mutate("exercisePlans", current.map(p =>
+        p.id === planId
+          ? { ...p, exercises: p.exercises.filter(e => e.id !== exerciseId) }
           : p
       ), false)
     },
@@ -313,41 +468,262 @@ export function useExercisePlans(user?: UserProfile) {
 
 
 export function useTrainingLogs() {
-  const { data, error } = useSWR<TrainingLog[]>("trainingLogs", fetcher("trainingLogs", defaultTrainingLogs))
+  const { data, error, isLoading } = useSWR<TrainingLog[]>(
+    "trainingLogs",
+    async () => {
+      // Get current user
+      const currentUser = await getCurrentUser()
+      if (!currentUser) {
+        console.log("No user found, returning default training logs")
+        return defaultTrainingLogs
+      }
+      
+      // Fetch from database
+      const dbLogs = await getTrainingLogsFromDb(currentUser.id)
+      
+      if (!dbLogs || dbLogs.length === 0) {
+        console.log("No logs found in database, returning default training logs")
+        return defaultTrainingLogs
+      }
+      
+      // Convert database logs to TrainingLog format
+      return dbLogs.map((log: TrainingLogWithExercises) => ({
+        id: log.id,
+        date: log.date,
+        planName: log.planName,
+        duration: log.duration,
+        exercises: log.exercises.map(e => ({
+          id: e.id,
+          name: e.name,
+          sets: e.sets,
+          reps: e.reps,
+          weight: e.weight,
+          bodyPart: e.bodyPart,
+          completed: e.completed,
+        }))
+      }))
+    },
+    {
+      fallbackData: defaultTrainingLogs,
+    }
+  )
+
   return {
     logs: data ?? defaultTrainingLogs,
     isLoading: !data && !error,
-    addLog: (log: TrainingLog) => {
-      mutate("trainingLogs", [log, ...(data ?? defaultTrainingLogs)], false)
+    addLog: async (log: Omit<TrainingLog, "id">) => {
+      const currentUser = await getCurrentUser()
+      if (!currentUser) {
+        console.error("No user found for adding log")
+        return
+      }
+      
+      // Save to database
+      const dbLog = await createTrainingLogInDb(currentUser.id, {
+        date: log.date,
+        planName: log.planName,
+        duration: log.duration,
+        exercises: log.exercises.map(e => ({
+          name: e.name,
+          sets: e.sets,
+          reps: e.reps,
+          weight: e.weight,
+          bodyPart: e.bodyPart,
+          completed: e.completed,
+        }))
+      })
+      
+      if (dbLog) {
+        // Update local cache with the new log from database
+        const newLog: TrainingLog = {
+          id: dbLog.id,
+          date: dbLog.date,
+          planName: dbLog.planName,
+          duration: dbLog.duration,
+          exercises: dbLog.exercises.map(e => ({
+            id: e.id,
+            name: e.name,
+            sets: e.sets,
+            reps: e.reps,
+            weight: e.weight,
+            bodyPart: e.bodyPart,
+            completed: e.completed,
+          }))
+        }
+        mutate("trainingLogs", [newLog, ...(data ?? defaultTrainingLogs)], false)
+      }
+    },
+    deleteLog: async (logId: string) => {
+      // Delete from database
+      await deleteTrainingLogFromDb(logId)
+      
+      // Update local cache
+      const current = data ?? defaultTrainingLogs
+      mutate("trainingLogs", current.filter(l => l.id !== logId), false)
     },
   }
 }
 
 export function useNutritionPlans() {
-  const { data, error } = useSWR<NutritionPlan[]>("nutritionPlans", fetcher("nutritionPlans", defaultNutritionPlans))
+  const { data, error, isLoading } = useSWR<NutritionPlan[]>(
+    "nutritionPlans",
+    async () => {
+      const currentUser = await getCurrentUser()
+      if (!currentUser) {
+        console.log("No user found, returning default nutrition plans")
+        return defaultNutritionPlans
+      }
+      
+      const dbPlans = await getNutritionPlansFromDb(currentUser.id)
+      
+      if (!dbPlans || dbPlans.length === 0) {
+        console.log("No nutrition plans found in database, returning default plans")
+        return defaultNutritionPlans
+      }
+      
+      return dbPlans.map((plan: NutritionPlanWithMeals) => ({
+        id: plan.id,
+        name: plan.name,
+        targetCalories: plan.targetCalories,
+        targetProtein: plan.targetProtein,
+        targetCarbs: plan.targetCarbs,
+        targetFat: plan.targetFat,
+        meals: plan.meals,
+      }))
+    },
+    {
+      fallbackData: defaultNutritionPlans,
+    }
+  )
+
   return {
     plans: data ?? defaultNutritionPlans,
     isLoading: !data && !error,
-    addPlan: (plan: NutritionPlan) => {
-      mutate("nutritionPlans", [...(data ?? defaultNutritionPlans), plan], false)
+    addPlan: async (plan: NutritionPlan) => {
+      const currentUser = await getCurrentUser()
+      if (!currentUser) {
+        console.error("No user found for adding plan")
+        return
+      }
+      
+      const dbPlan = await createNutritionPlanInDb(currentUser.id, {
+        name: plan.name,
+        targetCalories: plan.targetCalories,
+        targetProtein: plan.targetProtein,
+        targetCarbs: plan.targetCarbs,
+        targetFat: plan.targetFat,
+        meals: plan.meals,
+      })
+      
+      if (dbPlan) {
+        const newPlan: NutritionPlan = {
+          id: dbPlan.id,
+          name: dbPlan.name,
+          targetCalories: dbPlan.targetCalories,
+          targetProtein: dbPlan.targetProtein,
+          targetCarbs: dbPlan.targetCarbs,
+          targetFat: dbPlan.targetFat,
+          meals: dbPlan.meals,
+        }
+        mutate("nutritionPlans", [...(data ?? defaultNutritionPlans), newPlan], false)
+      }
     },
-    updatePlan: (planId: string, updates: Partial<NutritionPlan>) => {
+    updatePlan: async (planId: string, updates: Partial<NutritionPlan>) => {
+      await updateNutritionPlanInDb(planId, {
+        name: updates.name,
+        targetCalories: updates.targetCalories,
+        targetProtein: updates.targetProtein,
+        targetCarbs: updates.targetCarbs,
+        targetFat: updates.targetFat,
+        meals: updates.meals,
+      })
+      
       const current = data ?? defaultNutritionPlans
       mutate("nutritionPlans", current.map(p => p.id === planId ? { ...p, ...updates } : p), false)
+    },
+    deletePlan: async (planId: string) => {
+      await deleteNutritionPlanInDb(planId)
+      
+      const current = data ?? defaultNutritionPlans
+      mutate("nutritionPlans", current.filter(p => p.id !== planId), false)
     },
   }
 }
 
 export function useDailyNutrition() {
-  const { data, error } = useSWR<DailyNutrition>("dailyNutrition", fetcher("dailyNutrition", defaultDailyNutrition))
+  const today = new Date().toISOString().split('T')[0]
+  
+  const { data, error, isLoading } = useSWR<DailyNutrition>(
+    ["dailyNutrition", today],
+    async () => {
+      const currentUser = await getCurrentUser()
+      if (!currentUser) {
+        console.log("No user found, returning default daily nutrition")
+        return defaultDailyNutrition
+      }
+      
+      const dbNutrition = await getDailyNutritionFromDb(currentUser.id, today)
+      
+      if (!dbNutrition || dbNutrition.entries.length === 0) {
+        console.log("No daily nutrition found in database, returning default")
+        return defaultDailyNutrition
+      }
+      
+      return {
+        date: dbNutrition.date,
+        targetCalories: dbNutrition.targetCalories,
+        entries: dbNutrition.entries.map(e => ({
+          id: e.id,
+          name: e.name,
+          calories: e.calories,
+          protein: e.protein,
+          carbs: e.carbs,
+          fat: e.fat,
+          mealType: e.mealType,
+        })),
+      }
+    },
+    {
+      fallbackData: defaultDailyNutrition,
+    }
+  )
+
   return {
     nutrition: data ?? defaultDailyNutrition,
     isLoading: !data && !error,
-    addEntry: (entry: MealEntry) => {
-      const current = data ?? defaultDailyNutrition
-      mutate("dailyNutrition", { ...current, entries: [...current.entries, entry] }, false)
+    addEntry: async (entry: MealEntry) => {
+      const currentUser = await getCurrentUser()
+      if (!currentUser) {
+        console.error("No user found for adding entry")
+        return
+      }
+      
+      const dbEntry = await addMealEntryToDb(currentUser.id, today, {
+        name: entry.name,
+        calories: entry.calories,
+        protein: entry.protein,
+        carbs: entry.carbs,
+        fat: entry.fat,
+        mealType: entry.mealType,
+      })
+      
+      if (dbEntry) {
+        const newEntry: MealEntry = {
+          id: dbEntry.id,
+          name: dbEntry.name,
+          calories: dbEntry.calories,
+          protein: dbEntry.protein,
+          carbs: dbEntry.carbs,
+          fat: dbEntry.fat,
+          mealType: dbEntry.meal_type,
+        }
+        const current = data ?? defaultDailyNutrition
+        mutate("dailyNutrition", { ...current, entries: [...current.entries, newEntry] }, false)
+      }
     },
-    removeEntry: (id: string) => {
+    removeEntry: async (id: string) => {
+      await deleteMealEntryFromDb(id)
+      
       const current = data ?? defaultDailyNutrition
       mutate("dailyNutrition", { ...current, entries: current.entries.filter(e => e.id !== id) }, false)
     },
