@@ -43,6 +43,7 @@ export interface UserProfile { // aqui é oq cada perfil tem
   height: number
   workoutFrequency: string
   workoutLocation: string
+  injuriesAndAllergies: string
 }
 
 // Helper to convert database Profile to UserProfile
@@ -61,6 +62,7 @@ function convertToUserProfile(dbProfile: DbProfile | null): UserProfile | null {
     height: dbProfile.height,
     workoutFrequency: dbProfile.workout_frequency,
     workoutLocation: dbProfile.workout_location,
+    injuriesAndAllergies: dbProfile.injuries_and_allergies || "",
   }
 }
 
@@ -138,6 +140,7 @@ export const defaultProfile: UserProfile = {
   height: 170,
   workoutFrequency: "3-4",
   workoutLocation: "gym",
+  injuriesAndAllergies: "",
 }
 
 
@@ -273,7 +276,7 @@ export function useProfile() {
         return
       }
       
-      // Update in database
+// Update in database
       const updatedProfile = await updateProfileInDb(user.id, {
         name: updates.name,
         age: updates.age,
@@ -287,6 +290,7 @@ export function useProfile() {
         height: updates.height,
         workout_frequency: updates.workoutFrequency,
         workout_location: updates.workoutLocation,
+        injuries_and_allergies: updates.injuriesAndAllergies,
       })
       
       if (updatedProfile) {

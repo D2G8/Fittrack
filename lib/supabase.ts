@@ -161,6 +161,7 @@ export interface Profile {
   objective: string
   workout_frequency: string
   workout_location: string
+  injuries_and_allergies: string
   profile_picture: string
   level: number
   xp: number

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { getCurrentUser } from "@/lib/supabase"
 import { User as SupabaseUser } from "@supabase/supabase-js"
 import { useProfile } from "@/lib/store"
-import { ArrowLeft, User as UserIcon, Target, Weight, Save, Bell, Shield, Palette, Ruler } from "lucide-react"
+import { ArrowLeft, User as UserIcon, Target, Weight, Save, Bell, Shield, Palette, Ruler, AlertCircle } from "lucide-react"
 
 const workoutFrequencies = [
   { value: "1-2", label: "1-2 times/week" },
@@ -33,6 +33,7 @@ export default function SettingsPage() {
     height: profile.height,
     workoutFrequency: profile.workoutFrequency,
     workoutLocation: profile.workoutLocation,
+    injuriesAndAllergies: profile.injuriesAndAllergies,
   })
   const [saved, setSaved] = useState(false)
 
@@ -60,6 +61,7 @@ export default function SettingsPage() {
       height: profile.height,
       workoutFrequency: profile.workoutFrequency,
       workoutLocation: profile.workoutLocation,
+      injuriesAndAllergies: profile.injuriesAndAllergies,
     })
   }, [profile])
 
@@ -85,6 +87,7 @@ export default function SettingsPage() {
       height: form.height,
       workoutFrequency: form.workoutFrequency,
       workoutLocation: form.workoutLocation,
+      injuriesAndAllergies: form.injuriesAndAllergies,
     })
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
@@ -232,6 +235,21 @@ export default function SettingsPage() {
                     ))}
                   </select>
                 </div>
+              </div>
+              <div>
+                <label htmlFor="injuriesAndAllergies" className="mb-1.5 block text-sm font-medium text-foreground">
+                  <span className="flex items-center gap-1">
+                    <AlertCircle className="h-3.5 w-3.5" /> Injuries & Allergies
+                  </span>
+                </label>
+                <textarea
+                  id="injuriesAndAllergies"
+                  value={form.injuriesAndAllergies}
+                  onChange={(e) => setForm({ ...form, injuriesAndAllergies: e.target.value })}
+                  placeholder="E.g., Knee injury, peanut allergy..."
+                  rows={3}
+                  className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-foreground focus:outline-none resize-none"
+                />
               </div>
             </div>
           </section>
