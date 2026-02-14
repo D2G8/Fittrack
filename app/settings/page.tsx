@@ -5,13 +5,37 @@ import { useRouter } from "next/navigation"
 import { getCurrentUser } from "@/lib/supabase"
 import { User as SupabaseUser } from "@supabase/supabase-js"
 import { useProfile } from "@/lib/store"
-import { ArrowLeft, Bell, Shield, Palette } from "lucide-react"
+import { ArrowLeft, User as UserIcon, Target, Weight, Save, Bell, Shield, Palette, Ruler, AlertCircle } from "lucide-react"
+
+const workoutFrequencies = [
+  { value: "1-2", label: "1-2 times/week" },
+  { value: "3-4", label: "3-4 times/week" },
+  { value: "5+", label: "5+ times/week" },
+]
+
+const workoutLocations = [
+  { value: "gym", label: "Gym" },
+  { value: "home", label: "Home" },
+  { value: "both", label: "Both" },
+]
 
 export default function SettingsPage() {
   const router = useRouter()
   const [user, setUser] = useState<SupabaseUser | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const { } = useProfile()
+  const { profile, updateProfile } = useProfile()
+  const [form, setForm] = useState({
+    name: profile.name,
+    age: profile.age,
+    weight: profile.weight,
+    targetWeight: profile.targetWeight,
+    objective: profile.objective,
+    height: profile.height,
+    workoutFrequency: profile.workoutFrequency,
+    workoutLocation: profile.workoutLocation,
+    injuriesAndAllergies: profile.injuriesAndAllergies,
+  })
+  const [saved, setSaved] = useState(false)
 
   useEffect(() => {
     async function checkAuth() {
@@ -26,6 +50,21 @@ export default function SettingsPage() {
     checkAuth()
   }, [router])
 
+  // Update form when profile loads
+  useEffect(() => {
+    setForm({
+      name: profile.name,
+      age: profile.age,
+      weight: profile.weight,
+      targetWeight: profile.targetWeight,
+      objective: profile.objective,
+      height: profile.height,
+      workoutFrequency: profile.workoutFrequency,
+      workoutLocation: profile.workoutLocation,
+      injuriesAndAllergies: profile.injuriesAndAllergies,
+    })
+  }, [profile])
+
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
@@ -36,6 +75,22 @@ export default function SettingsPage() {
 
   if (!user) {
     return null
+  }
+
+  const handleSave = () => {
+    updateProfile({
+      name: form.name,
+      age: form.age,
+      weight: form.weight,
+      targetWeight: form.targetWeight,
+      objective: form.objective,
+      height: form.height,
+      workoutFrequency: form.workoutFrequency,
+      workoutLocation: form.workoutLocation,
+      injuriesAndAllergies: form.injuriesAndAllergies,
+    })
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2000)
   }
 
   return (
@@ -55,6 +110,158 @@ export default function SettingsPage() {
 
       <main className="mx-auto max-w-lg px-4 py-6">
         <div className="flex flex-col gap-6">
+          {/* Profile Section */}
+          <section className="rounded-2xl border border-border bg-card p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <UserIcon className="h-5 w-5 text-muted-foreground" />
+              <h2 className="font-display text-lg font-bold text-foreground">Profile</h2>
+            </div>
+
+            <div className="flex flex-col gap-4">
+              <div>
+                <label htmlFor="name" className="mb-1.5 block text-sm font-medium text-foreground">Name</label>
+                <input
+                  id="name"
+                  type="text"
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm text-foreground focus:border-foreground focus:outline-none"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor="age" className="mb-1.5 block text-sm font-medium text-foreground">Age</label>
+                  <input
+                    id="age"
+                    type="number"
+                    value={form.age}
+                    onChange={(e) => setForm({ ...form, age: +e.target.value })}
+                    className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm text-foreground focus:border-foreground focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="height" className="mb-1.5 block text-sm font-medium text-foreground">
+                    <span className="flex items-center gap-1">
+                      <Ruler className="h-3.5 w-3.5" /> Height (cm)
+                    </span>
+                  </label>
+                  <input
+                    id="height"
+                    type="number"
+                    value={form.height}
+                    onChange={(e) => setForm({ ...form, height: +e.target.value })}
+                    className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm text-foreground focus:border-foreground focus:outline-none"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor="weight" className="mb-1.5 block text-sm font-medium text-foreground">
+                    <span className="flex items-center gap-1">
+                      <Weight className="h-3.5 w-3.5" /> Weight (kg)
+                    </span>
+                  </label>
+                  <input
+                    id="weight"
+                    type="number"
+                    value={form.weight}
+                    onChange={(e) => setForm({ ...form, weight: +e.target.value })}
+                    className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm text-foreground focus:border-foreground focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="targetWeight" className="mb-1.5 block text-sm font-medium text-foreground">
+                    <span className="flex items-center gap-1">
+                      <Target className="h-3.5 w-3.5" /> Target (kg)
+                    </span>
+                  </label>
+                  <input
+                    id="targetWeight"
+                    type="number"
+                    value={form.targetWeight}
+                    onChange={(e) => setForm({ ...form, targetWeight: +e.target.value })}
+                    className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm text-foreground focus:border-foreground focus:outline-none"
+                  />
+                </div>
+              </div>
+              <div>
+                <label htmlFor="objective" className="mb-1.5 block text-sm font-medium text-foreground">Objective</label>
+                <select
+                  id="objective"
+                  value={form.objective}
+                  onChange={(e) => setForm({ ...form, objective: e.target.value })}
+                  className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm text-foreground focus:border-foreground focus:outline-none"
+                >
+                  <option>Lose Weight & Build Muscle</option>
+                  <option>Build Muscle</option>
+                  <option>Lose Weight</option>
+                  <option>Maintain Weight</option>
+                  <option>Improve Endurance</option>
+                  <option>General Fitness</option>
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor="workoutFrequency" className="mb-1.5 block text-sm font-medium text-foreground">
+                    Workout Frequency
+                  </label>
+                  <select
+                    id="workoutFrequency"
+                    value={form.workoutFrequency}
+                    onChange={(e) => setForm({ ...form, workoutFrequency: e.target.value })}
+                    className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm text-foreground focus:border-foreground focus:outline-none"
+                  >
+                    {workoutFrequencies.map((freq) => (
+                      <option key={freq.value} value={freq.value}>
+                        {freq.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="workoutLocation" className="mb-1.5 block text-sm font-medium text-foreground">
+                    Workout Location
+                  </label>
+                  <select
+                    id="workoutLocation"
+                    value={form.workoutLocation}
+                    onChange={(e) => setForm({ ...form, workoutLocation: e.target.value })}
+                    className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm text-foreground focus:border-foreground focus:outline-none"
+                  >
+                    {workoutLocations.map((loc) => (
+                      <option key={loc.value} value={loc.value}>
+                        {loc.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label htmlFor="injuriesAndAllergies" className="mb-1.5 block text-sm font-medium text-foreground">
+                  <span className="flex items-center gap-1">
+                    <AlertCircle className="h-3.5 w-3.5" /> Injuries & Allergies
+                  </span>
+                </label>
+                <textarea
+                  id="injuriesAndAllergies"
+                  value={form.injuriesAndAllergies}
+                  onChange={(e) => setForm({ ...form, injuriesAndAllergies: e.target.value })}
+                  placeholder="E.g., Knee injury, peanut allergy..."
+                  rows={3}
+                  className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-foreground focus:outline-none resize-none"
+                />
+              </div>
+              
+              <button
+                onClick={handleSave}
+                className="mt-2 flex items-center justify-center gap-2 rounded-lg bg-foreground px-4 py-2.5 text-sm font-medium text-background hover:bg-foreground/90"
+              >
+                <Save className="h-4 w-4" />
+                {saved ? "Saved!" : "Save Changes"}
+              </button>
+            </div>
+          </section>
+
           {/* Notifications Section */}
           <section className="rounded-2xl border border-border bg-card p-5">
             <div className="flex items-center gap-2 mb-4">

@@ -40,6 +40,10 @@ export interface UserProfile { // aqui é oq cada perfil tem
   level: number
   xp: number
   xpToNextLevel: number
+  height: number
+  workoutFrequency: string
+  workoutLocation: string
+  injuriesAndAllergies: string
 }
 
 // Helper to convert database Profile to UserProfile
@@ -55,6 +59,10 @@ function convertToUserProfile(dbProfile: DbProfile | null): UserProfile | null {
     level: dbProfile.level,
     xp: dbProfile.xp,
     xpToNextLevel: dbProfile.xp_to_next_level,
+    height: dbProfile.height,
+    workoutFrequency: dbProfile.workout_frequency,
+    workoutLocation: dbProfile.workout_location,
+    injuriesAndAllergies: dbProfile.injuries_and_allergies || "",
   }
 }
 
@@ -129,6 +137,10 @@ export const defaultProfile: UserProfile = {
   level: 7,
   xp: 2340,
   xpToNextLevel: 3000,
+  height: 170,
+  workoutFrequency: "3-4",
+  workoutLocation: "gym",
+  injuriesAndAllergies: "",
 }
 
 
@@ -233,20 +245,17 @@ const fetcher = <T>(key: string, defaultData: T) => (): T => {
 }
 
 export function useProfile() {
-   console.log("TO USANDO PROFILE")
   // Fetch profile from database using SWR
   const { data, error, isLoading } = useSWR<UserProfile>("profile", async () => {
     // Get the current user
     const user = await getCurrentUser()
     if (!user) {
-      console.log("No user found, returning default profile")
       return defaultProfile
     }
     
     // Get the profile from database
     const dbProfile = await getProfile(user.id)
     if (!dbProfile) {
-      console.log("No profile found in database, returning default profile")
       return defaultProfile
     }
     
@@ -267,7 +276,7 @@ export function useProfile() {
         return
       }
       
-      // Update in database
+// Update in database
       const updatedProfile = await updateProfileInDb(user.id, {
         name: updates.name,
         age: updates.age,
@@ -278,6 +287,10 @@ export function useProfile() {
         level: updates.level,
         xp: updates.xp,
         xp_to_next_level: updates.xpToNextLevel,
+        height: updates.height,
+        workout_frequency: updates.workoutFrequency,
+        workout_location: updates.workoutLocation,
+        injuries_and_allergies: updates.injuriesAndAllergies,
       })
       
       if (updatedProfile) {
@@ -302,25 +315,39 @@ export function useMissions() {
 }
 
 
-export function useExercisePlans(user?: UserProfile) {
-  const safeUser = user ?? defaultProfile
-  const generatedPlans = generatePlans(safeUser)
+export function useExercisePlans() {
+  // Get the current user ID for the SWR key
+  const { data: userId } = useSWR<string | null>("userId", async () => {
+    const user = await getCurrentUser()
+    return user?.id ?? null
+  })
+
+  // Get profile to generate plans based on objective
+  const { data: profile } = useSWR<UserProfile>(
+    userId ? ["profile", userId] : null,
+    async () => {
+      if (!userId) return defaultProfile
+      const dbProfile = await getProfile(userId)
+      return convertToUserProfile(dbProfile) ?? defaultProfile
+    },
+    { fallbackData: defaultProfile }
+  )
+
+  console.log(profile)
+
+  const generatedPlans = generatePlans(profile ?? defaultProfile)
 
   const { data, error, isLoading } = useSWR<ExercisePlan[]>(
-    "exercisePlans",
+    userId ? ["exercisePlans", userId] : null,
     async () => {
-      // Get current user
-      const currentUser = await getCurrentUser()
-      if (!currentUser) {
-        console.log("No user found, returning generated plans")
+      if (!userId) {
         return generatedPlans
       }
       
       // Fetch from database
-      const dbPlans = await getExercisePlansFromDb(currentUser.id)
+      const dbPlans = await getExercisePlansFromDb(userId)
       
       if (!dbPlans || dbPlans.length === 0) {
-        console.log("No plans found in database, returning generated plans")
         return generatedPlans
       }
       
@@ -477,7 +504,6 @@ export function useTrainingLogs() {
       // Get current user
       const currentUser = await getCurrentUser()
       if (!currentUser) {
-        console.log("No user found, returning default training logs")
         return defaultTrainingLogs
       }
       
@@ -485,7 +511,6 @@ export function useTrainingLogs() {
       const dbLogs = await getTrainingLogsFromDb(currentUser.id)
       
       if (!dbLogs || dbLogs.length === 0) {
-        console.log("No logs found in database, returning default training logs")
         return defaultTrainingLogs
       }
       
@@ -573,14 +598,12 @@ export function useNutritionPlans() {
     async () => {
       const currentUser = await getCurrentUser()
       if (!currentUser) {
-        console.log("No user found, returning default nutrition plans")
         return defaultNutritionPlans
       }
       
       const dbPlans = await getNutritionPlansFromDb(currentUser.id)
       
       if (!dbPlans || dbPlans.length === 0) {
-        console.log("No nutrition plans found in database, returning default plans")
         return defaultNutritionPlans
       }
       
@@ -751,7 +774,6 @@ export function getBodyPartsForToday(plans: ExercisePlan[]): string[] {
 
 function generatePlans(user: UserProfile): ExercisePlan[] {
   const plans: ExercisePlan[] = [];
-
   if (user.objective.includes("Lose Weight")) {
     plans.push({
       id: "cw1",

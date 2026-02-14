@@ -102,7 +102,8 @@ export async function signUp(
   targetWeight: number,
   objective: string,
   workoutFrequency: string,
-  workoutLocation: string
+  workoutLocation: string,
+  injuriesAndAllergies: string
 ) {
   try {
     const { data, error } = await supabase.client.auth.signUp({
@@ -118,6 +119,7 @@ export async function signUp(
           objective,
           workoutFrequency,
           workoutLocation,
+          injuriesAndAllergies,
         },
       },
     })
@@ -161,6 +163,7 @@ export interface Profile {
   objective: string
   workout_frequency: string
   workout_location: string
+  injuries_and_allergies: string
   profile_picture: string
   level: number
   xp: number
@@ -201,17 +204,33 @@ export async function updateProfile(userId: string, updates: Partial<Profile>): 
 }
 
 // Helper function to create a new profile in the database
-export async function createProfile(userId: string, email: string, name: string): Promise<Profile | null> {
+export async function createProfile(
+  userId: string, 
+  email: string, 
+  name: string,
+  age: number,
+  weight: number,
+  targetWeight: number,
+  objective: string,
+  height?: number,
+  workoutFrequency?: string,
+  workoutLocation?: string,
+  injuriesAndAllergies?: string
+): Promise<Profile | null> {
   const { data, error } = await supabase.client
     .from('profiles')
     .insert({
       id: userId,
       email,
       name,
-      age: 25,
-      weight: 70,
-      target_weight: 70,
-      objective: 'Build Muscle',
+      age,
+      weight,
+      height: height || 170,
+      target_weight: targetWeight,
+      objective,
+      workout_frequency: workoutFrequency || '3-4',
+      workout_location: workoutLocation || 'gym',
+      injuries_and_allergies: injuriesAndAllergies || '',
       profile_picture: '',
       level: 1,
       xp: 0,
