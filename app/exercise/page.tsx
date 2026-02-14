@@ -1,5 +1,9 @@
 "use client"
 
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import { getCurrentUser } from "@/lib/supabase"
+import { User } from "@supabase/supabase-js"
 import { NavBar } from "@/components/nav-bar"
 import { BodyModel } from "@/components/exercise/body-model"
 import { TodaysWorkout } from "@/components/exercise/todays-workout"
@@ -9,8 +13,36 @@ import { useExercisePlans, getBodyPartsForToday } from "@/lib/store"
 import { Dumbbell } from "lucide-react"
 
 export default function ExercisePage() {
+  const router = useRouter()
+  const [user, setUser] = useState<User | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
   const { plans } = useExercisePlans()
   const activeBodyParts = getBodyPartsForToday(plans)
+
+  useEffect(() => {
+    async function checkAuth() {
+      const currentUser = await getCurrentUser()
+      setUser(currentUser)
+      setIsLoading(false)
+      
+      if (!currentUser) {
+        router.push("/login")
+      }
+    }
+    checkAuth()
+  }, [router])
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-muted border-t-foreground" />
+      </div>
+    )
+  }
+
+  if (!user) {
+    return null
+  }
 
   return (
     <div className="min-h-screen bg-exercise-bg pb-24">

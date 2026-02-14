@@ -1,15 +1,18 @@
 "use client"
 
 import { useState } from "react"
-import { useExercisePlans, type ExercisePlan, type Exercise } from "@/lib/store"
+import { useExercisePlans, type ExercisePlan, type Exercise, useProfile } from "@/lib/store"
 import { Plus, Pencil, Trash2, X, Save, ChevronDown, ChevronUp } from "lucide-react"
 import { cn } from "@/lib/utils"
+
+
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 const BODY_PARTS = ["chest", "back", "shoulders", "arms", "legs", "core"]
 
 export function PlanEditor() {
-  const { plans, addPlan, updatePlan, deletePlan } = useExercisePlans()
+  const { profile } = useProfile()
+  const { plans, addPlan, updatePlan, deletePlan } = useExercisePlans(profile)
   const [editingPlan, setEditingPlan] = useState<string | null>(null)
   const [expandedPlan, setExpandedPlan] = useState<string | null>(null)
   const [showAddForm, setShowAddForm] = useState(false)

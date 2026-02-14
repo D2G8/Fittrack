@@ -60,7 +60,15 @@ export async function signIn(email: string, password: string) {
 }
 
 // Helper function to sign up with email and password
-export async function signUp(email: string, password: string, name: string) {
+export async function signUp(
+  email: string, 
+  password: string, 
+  name: string,
+  age: number,
+  weight: number,
+  targetWeight: number,
+  objective: string
+) {
   try {
     const { data, error } = await supabase.client.auth.signUp({
       email,
@@ -68,6 +76,10 @@ export async function signUp(email: string, password: string, name: string) {
       options: {
         data: {
           name,
+          age,
+          weight,
+          targetWeight,
+          objective,
         },
       },
     })

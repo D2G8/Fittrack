@@ -10,7 +10,13 @@ export function TodaysWorkout() {
   
   // Passar o profile para useExercisePlans - os planos são gerados baseados no objetivo do user
   const { plans, toggleExercise } = useExercisePlans(profile)
+
+  console.log(plans)
+  console.log(toggleExercise)
+  
   const todaysPlan = getTodaysPlan(plans)
+
+  console.log(todaysPlan)
 
   if (!todaysPlan) {
     return (

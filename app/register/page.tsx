@@ -4,11 +4,26 @@ import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Eye, EyeOff, ArrowLeft, Dumbbell } from "lucide-react"
-import { signUp, createProfile } from "@/lib/supabase"
+import { signUp } from "@/lib/supabase"
+
+const objectives = [
+  { value: "Build Muscle", label: "Build Muscle" },
+  { value: "Lose Weight", label: "Lose Weight" },
+  { value: "Maintain Weight", label: "Maintain Weight" },
+]
 
 export default function RegisterPage() {
   const router = useRouter()
-  const [form, setForm] = useState({ name: "", email: "", password: "", confirmPassword: "" })
+  const [form, setForm] = useState({ 
+    name: "", 
+    email: "", 
+    password: "", 
+    confirmPassword: "",
+    age: "",
+    weight: "",
+    targetWeight: "",
+    objective: "Build Muscle"
+  })
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
@@ -27,11 +42,31 @@ export default function RegisterPage() {
       setError("Password must be at least 8 characters")
       return
     }
+    if (!form.age || parseInt(form.age) < 1 || parseInt(form.age) > 120) {
+      setError("Please enter a valid age")
+      return
+    }
+    if (!form.weight || parseFloat(form.weight) < 20 || parseFloat(form.weight) > 300) {
+      setError("Please enter a valid weight")
+      return
+    }
+    if (!form.targetWeight || parseFloat(form.targetWeight) < 20 || parseFloat(form.targetWeight) > 300) {
+      setError("Please enter a valid target weight")
+      return
+    }
 
     setIsLoading(true)
     setError("")
 
-    const { user, error: signUpError } = await signUp(form.email, form.password, form.name)
+    const { user, error: signUpError } = await signUp(
+      form.email, 
+      form.password, 
+      form.name,
+      parseInt(form.age),
+      parseFloat(form.weight),
+      parseFloat(form.targetWeight),
+      form.objective
+    )
 
     if (signUpError) {
       setError(signUpError.message)
@@ -40,8 +75,7 @@ export default function RegisterPage() {
     }
 
     if (user) {
-      // Create profile after successful signup
-      await createProfile(user.id, form.email, form.name)
+      // Profile is automatically created by Supabase trigger
       router.push("/")
       router.refresh()
     }
@@ -146,6 +180,76 @@ export default function RegisterPage() {
                 placeholder="Repeat your password"
                 className="w-full rounded-lg border border-border bg-card px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-foreground focus:outline-none"
               />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="age" className="mb-1.5 block text-sm font-medium text-foreground">
+                  Age
+                </label>
+                <input
+                  id="age"
+                  type="number"
+                  min="1"
+                  max="120"
+                  value={form.age}
+                  onChange={(e) => updateField("age", e.target.value)}
+                  placeholder="25"
+                  className="w-full rounded-lg border border-border bg-card px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-foreground focus:outline-none"
+                />
+              </div>
+              <div>
+                <label htmlFor="weight" className="mb-1.5 block text-sm font-medium text-foreground">
+                  Weight (kg)
+                </label>
+                <input
+                  id="weight"
+                  type="number"
+                  min="20"
+                  max="300"
+                  step="0.1"
+                  value={form.weight}
+                  onChange={(e) => updateField("weight", e.target.value)}
+                  placeholder="70"
+                  className="w-full rounded-lg border border-border bg-card px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-foreground focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="targetWeight" className="mb-1.5 block text-sm font-medium text-foreground">
+                  Target Weight (kg)
+                </label>
+                <input
+                  id="targetWeight"
+                  type="number"
+                  min="20"
+                  max="300"
+                  step="0.1"
+                  value={form.targetWeight}
+                  onChange={(e) => updateField("targetWeight", e.target.value)}
+                  placeholder="70"
+                  className="w-full rounded-lg border border-border bg-card px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-foreground focus:outline-none"
+                />
+              </div>
+              <div>
+                <label htmlFor="objective" className="mb-1.5 block text-sm font-medium text-foreground">
+                  Objective
+                </label>
+                <select
+                  id="objective"
+                  value={form.objective}
+                  onChange={(e) => updateField("objective", e.target.value)}
+                  className="w-full rounded-lg border border-border bg-card px-4 py-2.5 text-sm text-foreground focus:border-foreground focus:outline-none"
+                >
+                  {objectives.map((obj) => (
+                    <option key={obj.value} value={obj.value}>
+                      {obj.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             <button

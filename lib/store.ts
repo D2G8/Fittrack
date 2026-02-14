@@ -206,6 +206,7 @@ const fetcher = <T>(key: string, defaultData: T) => (): T => {
 }
 
 export function useProfile() {
+   console.log("TO USANDO PROFILE")
   // Fetch profile from database using SWR
   const { data, error, isLoading } = useSWR<UserProfile>("profile", async () => {
     // Get the current user
@@ -225,8 +226,10 @@ export function useProfile() {
     // Convert database profile to UserProfile
     return convertToUserProfile(dbProfile) ?? defaultProfile
   })
-
+  
+  
   return {
+    
     profile: data ?? defaultProfile,
     isLoading: isLoading,
     updateProfile: async (updates: Partial<UserProfile>) => {
@@ -273,17 +276,17 @@ export function useMissions() {
 
 
 export function useExercisePlans(user?: UserProfile) {
+  const safeUser = user ?? defaultProfile
 
+  // Include user objective in the SWR key so plans regenerate when profile changes
+  const swrKey = `exercisePlans-${safeUser.objective}-${safeUser.level}`
 
-  const safeUser = user ?? defaultProfile; 
-
-
-  const generatedPlans = generatePlans(safeUser);
+  const generatedPlans = generatePlans(safeUser)
 
   const { data, error } = useSWR<ExercisePlan[]>(
-    "exercisePlans",
+    swrKey,
     () => generatedPlans
-  );
+  )
 
   return {
     plans: data ?? generatedPlans,

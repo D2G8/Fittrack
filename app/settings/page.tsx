@@ -1,12 +1,16 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { getCurrentUser } from "@/lib/supabase"
+import { User as SupabaseUser } from "@supabase/supabase-js"
 import { useProfile } from "@/lib/store"
-import { ArrowLeft, User, Target, Weight, Save, Bell, Shield, Palette } from "lucide-react"
+import { ArrowLeft, User as UserIcon, Target, Weight, Save, Bell, Shield, Palette } from "lucide-react"
 
 export default function SettingsPage() {
   const router = useRouter()
+  const [user, setUser] = useState<SupabaseUser | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
   const { profile, updateProfile } = useProfile()
   const [form, setForm] = useState({
     name: profile.name,
@@ -16,6 +20,31 @@ export default function SettingsPage() {
     objective: profile.objective,
   })
   const [saved, setSaved] = useState(false)
+
+  useEffect(() => {
+    async function checkAuth() {
+      const currentUser = await getCurrentUser()
+      setUser(currentUser)
+      setIsLoading(false)
+      
+      if (!currentUser) {
+        router.push("/login")
+      }
+    }
+    checkAuth()
+  }, [router])
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-muted border-t-foreground" />
+      </div>
+    )
+  }
+
+  if (!user) {
+    return null
+  }
 
   const handleSave = () => {
     updateProfile(form)
@@ -43,7 +72,7 @@ export default function SettingsPage() {
           {/* Profile Section */}
           <section className="rounded-2xl border border-border bg-card p-5">
             <div className="flex items-center gap-2 mb-4">
-              <User className="h-5 w-5 text-muted-foreground" />
+              <UserIcon className="h-5 w-5 text-muted-foreground" />
               <h2 className="font-display text-lg font-bold text-foreground">Profile</h2>
             </div>
 
