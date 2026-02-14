@@ -30,29 +30,23 @@ export function PlanEditor() {
     setShowAddForm(false)
   }
 
-  const handleAddExercise = (planId: string) => {
+  const handleAddExercise = async (planId: string) => {
     if (!newExercise.name.trim()) return
-    const plan = plans.find((p) => p.id === planId)
-    if (!plan) return
 
-    const exercise: Exercise = {
-      id: `e-${Date.now()}`,
+    // Use the addExercise function from the hook which saves to database
+    await addExercise(planId, {
       name: newExercise.name,
       sets: newExercise.sets,
       reps: newExercise.reps,
       weight: newExercise.weight,
       bodyPart: newExercise.bodyPart,
-      completed: false,
-    }
-
-    updatePlan(planId, { exercises: [...plan.exercises, exercise] })
+    })
     setNewExercise({ name: "", sets: 3, reps: 10, weight: 0, bodyPart: "chest" })
   }
 
-  const handleRemoveExercise = (planId: string, exerciseId: string) => {
-    const plan = plans.find((p) => p.id === planId)
-    if (!plan) return
-    updatePlan(planId, { exercises: plan.exercises.filter((e) => e.id !== exerciseId) })
+  const handleRemoveExercise = async (planId: string, exerciseId: string) => {
+    // Use the removeExercise function from the hook which deletes from database
+    await removeExercise(planId, exerciseId)
   }
 
   return (

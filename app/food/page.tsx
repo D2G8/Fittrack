@@ -10,6 +10,7 @@ import { WeightGoal } from "@/components/food/weight-goal"
 import { FoodLog } from "@/components/food/food-log"
 import { NutritionPlanCard } from "@/components/food/nutrition-plan"
 import { RecipeGenerator } from "@/components/food/recipe-generator"
+import { NutritionChatbot } from "@/components/food/nutrition-chatbot"
 import { UtensilsCrossed } from "lucide-react"
 
 export default function FoodPage() {
@@ -64,6 +65,7 @@ export default function FoodPage() {
       </main>
 
       <NavBar />
+      <NutritionChatbot />
     </div>
   )
 }
