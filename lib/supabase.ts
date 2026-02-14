@@ -102,7 +102,8 @@ export async function signUp(
   targetWeight: number,
   objective: string,
   workoutFrequency: string,
-  workoutLocation: string
+  workoutLocation: string,
+  injuriesAndAllergies: string
 ) {
   try {
     const { data, error } = await supabase.client.auth.signUp({
@@ -118,6 +119,7 @@ export async function signUp(
           objective,
           workoutFrequency,
           workoutLocation,
+          injuriesAndAllergies,
         },
       },
     })
@@ -209,7 +211,11 @@ export async function createProfile(
   age: number,
   weight: number,
   targetWeight: number,
-  objective: string
+  objective: string,
+  height?: number,
+  workoutFrequency?: string,
+  workoutLocation?: string,
+  injuriesAndAllergies?: string
 ): Promise<Profile | null> {
   const { data, error } = await supabase.client
     .from('profiles')
@@ -219,8 +225,12 @@ export async function createProfile(
       name,
       age,
       weight,
+      height: height || 170,
       target_weight: targetWeight,
       objective,
+      workout_frequency: workoutFrequency || '3-4',
+      workout_location: workoutLocation || 'gym',
+      injuries_and_allergies: injuriesAndAllergies || '',
       profile_picture: '',
       level: 1,
       xp: 0,

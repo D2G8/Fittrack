@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Eye, EyeOff, ArrowLeft, Dumbbell } from "lucide-react"
+import { Eye, EyeOff, ArrowLeft, Dumbbell, AlertCircle } from "lucide-react"
 import { signUp, createProfile } from "@/lib/supabase"
 
 const objectives = [
@@ -37,7 +37,8 @@ export default function RegisterPage() {
     targetWeight: "",
     objective: "Build Muscle",
     workoutFrequency: "3-4",
-    workoutLocation: "gym"
+    workoutLocation: "gym",
+    injuriesAndAllergies: ""
   })
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
@@ -87,7 +88,8 @@ export default function RegisterPage() {
       parseFloat(form.targetWeight),
       form.objective,
       form.workoutFrequency,
-      form.workoutLocation
+      form.workoutLocation,
+      form.injuriesAndAllergies
     )
 
     if (signUpError) {
@@ -106,7 +108,11 @@ export default function RegisterPage() {
         parseInt(form.age),
         parseFloat(form.weight),
         parseFloat(form.targetWeight),
-        form.objective
+        form.objective,
+        parseFloat(form.height),
+        form.workoutFrequency,
+        form.workoutLocation,
+        form.injuriesAndAllergies
       )
       router.push("/")
       router.refresh()
@@ -334,6 +340,22 @@ export default function RegisterPage() {
                   ))}
                 </select>
               </div>
+            </div>
+
+            <div>
+              <label htmlFor="injuriesAndAllergies" className="mb-1.5 block text-sm font-medium text-foreground">
+                <span className="flex items-center gap-1">
+                  <AlertCircle className="h-3.5 w-3.5" /> Injuries & Allergies (optional)
+                </span>
+              </label>
+              <textarea
+                id="injuriesAndAllergies"
+                value={form.injuriesAndAllergies}
+                onChange={(e) => updateField("injuriesAndAllergies", e.target.value)}
+                placeholder="E.g., Knee injury, peanut allergy..."
+                rows={2}
+                className="w-full rounded-lg border border-border bg-card px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-foreground focus:outline-none resize-none"
+              />
             </div>
 
             <button

@@ -774,7 +774,6 @@ export function getBodyPartsForToday(plans: ExercisePlan[]): string[] {
 
 function generatePlans(user: UserProfile): ExercisePlan[] {
   const plans: ExercisePlan[] = [];
-
   if (user.objective.includes("Lose Weight")) {
     plans.push({
       id: "cw1",
