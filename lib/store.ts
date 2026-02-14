@@ -1,7 +1,7 @@
 import useSWR, { mutate } from "swr"
 
 // ===== TYPES =====
-export interface UserProfile {
+export interface UserProfile { // aqui é oq cada perfil tem 
   name: string
   age: number
   weight: number
@@ -74,17 +74,24 @@ export interface DailyNutrition {
 }
 
 // ===== DEFAULT DATA =====
-const defaultProfile: UserProfile = {
-  name: "Alex Johnson",
-  age: 28,
+export const defaultProfile: UserProfile = {
+  name: "Meu piru",
+  age: 20,
   weight: 82,
   targetWeight: 75,
-  objective: "Lose Weight & Build Muscle",
+  objective: "Build Muscle",
   profilePicture: "",
   level: 7,
   xp: 2340,
   xpToNextLevel: 3000,
 }
+// import <- 
+// 
+// 
+// 
+// 
+// 
+// 
 
 const defaultMissions: Mission[] = [
   { id: "m1", title: "Complete Chest Day", description: "Finish your chest workout today", xpReward: 150, completed: false, type: "exercise" },
@@ -94,10 +101,11 @@ const defaultMissions: Mission[] = [
   { id: "m5", title: "30-Min Cardio", description: "Complete a 30 minute cardio session", xpReward: 120, completed: false, type: "exercise" },
 ]
 
-const defaultExercisePlans: ExercisePlan[] = [
+const defaultExercisePlans: ExercisePlan[] = [ // depende das opçoes do user..... 
+
   {
     id: "p1",
-    name: "Push Day",
+    name: "dia do puxo",
     dayOfWeek: "Monday",
     exercises: [
       { id: "e1", name: "Bench Press", sets: 4, reps: 10, weight: 80, bodyPart: "chest", completed: false },
@@ -209,32 +217,72 @@ export function useMissions() {
   }
 }
 
-export function useExercisePlans() {
-  const { data, error } = useSWR<ExercisePlan[]>("exercisePlans", fetcher("exercisePlans", defaultExercisePlans))
+// export function useExercisePlans() { // FUNÇAO QUE TIRA AS COISAS E LEVAM ELA PRO """frontend""" com mts aspas
+//   const { data, error } = useSWR<ExercisePlan[]>("exercisePlans", fetcher("exercisePlans", defaultExercisePlans))
+//   return {
+//     plans: data ?? defaultExercisePlans,
+//     isLoading: !data && !error,
+//     addPlan: (plan: ExercisePlan) => {
+//       mutate("exercisePlans", [...(data ?? defaultExercisePlans), plan], false)
+//     },
+//     updatePlan: (planId: string, updates: Partial<ExercisePlan>) => {
+//       const current = data ?? defaultExercisePlans
+//       mutate("exercisePlans", current.map(p => p.id === planId ? { ...p, ...updates } : p), false)
+//     },
+//     deletePlan: (planId: string) => {
+//       const current = data ?? defaultExercisePlans
+//       mutate("exercisePlans", current.filter(p => p.id !== planId), false)
+//     },
+//     toggleExercise: (planId: string, exerciseId: string) => {
+//       const current = data ?? defaultExercisePlans
+//       mutate("exercisePlans", current.map(p =>
+//         p.id === planId
+//           ? { ...p, exercises: p.exercises.map(e => e.id === exerciseId ? { ...e, completed: !e.completed } : e) }
+//           : p
+//       ), false)
+//     },
+//   }
+// }
+
+export function useExercisePlans(user?: UserProfile) {
+
+
+  const safeUser = user ?? defaultProfile; // ← AQUI
+
+
+  const generatedPlans = generatePlans(safeUser);
+
+  const { data, error } = useSWR<ExercisePlan[]>(
+    "exercisePlans",
+    () => generatedPlans
+  );
+
   return {
-    plans: data ?? defaultExercisePlans,
+    plans: data ?? generatedPlans,
     isLoading: !data && !error,
     addPlan: (plan: ExercisePlan) => {
-      mutate("exercisePlans", [...(data ?? defaultExercisePlans), plan], false)
+      mutate("exercisePlans", [...(data ?? generatedPlans), plan], false)
     },
     updatePlan: (planId: string, updates: Partial<ExercisePlan>) => {
-      const current = data ?? defaultExercisePlans
+      const current = data ?? generatedPlans;
       mutate("exercisePlans", current.map(p => p.id === planId ? { ...p, ...updates } : p), false)
     },
     deletePlan: (planId: string) => {
-      const current = data ?? defaultExercisePlans
+      const current = data ?? generatedPlans;
       mutate("exercisePlans", current.filter(p => p.id !== planId), false)
     },
     toggleExercise: (planId: string, exerciseId: string) => {
-      const current = data ?? defaultExercisePlans
+      const current = data ?? generatedPlans;
       mutate("exercisePlans", current.map(p =>
         p.id === planId
           ? { ...p, exercises: p.exercises.map(e => e.id === exerciseId ? { ...e, completed: !e.completed } : e) }
           : p
       ), false)
     },
-  }
+  };
 }
+
+
 
 export function useTrainingLogs() {
   const { data, error } = useSWR<TrainingLog[]>("trainingLogs", fetcher("trainingLogs", defaultTrainingLogs))
@@ -290,4 +338,55 @@ export function getBodyPartsForToday(plans: ExercisePlan[]): string[] {
   if (!plan) return []
   const parts = new Set(plan.exercises.map(e => e.bodyPart))
   return Array.from(parts)
+}
+
+// funçao que gera planos!!! de acordo com o usuario (quero usar o chat aqui né...)
+
+function generatePlans(user: UserProfile): ExercisePlan[] {
+  const plans: ExercisePlan[] = [];
+
+  if (user.objective.includes("Lose Weight")) {
+    plans.push({
+      id: "cw1",
+      name: "Cardio & Core",
+      dayOfWeek: "Monday",
+      exercises: [
+        { id: "e1", name: "Running", sets: 1, reps: 30, weight: 0, bodyPart: "legs", completed: false },
+        { id: "e2", name: "Plank", sets: 3, reps: 1, weight: 0, bodyPart: "core", completed: false },
+      ],
+    });
+    plans.push({
+      id: "cw2",
+      name: "HIIT & Abs",
+      dayOfWeek: "Wednesday",
+      exercises: [
+        { id: "e3", name: "Jumping Jacks", sets: 3, reps: 50, weight: 0, bodyPart: "fullBody", completed: false },
+        { id: "e4", name: "Crunches", sets: 3, reps: 20, weight: 0, bodyPart: "core", completed: false },
+      ],
+    });
+  }
+
+  if (user.objective.includes("Build Muscle")) {
+    const weightFactor = user.level * 5; // exemplo simples de ajustar peso
+    plans.push({
+      id: "mm1",
+      name: "Push Day",
+      dayOfWeek: "Tuesday",
+      exercises: [
+        { id: "e5", name: "Bench Press", sets: 4, reps: 10, weight: 50 + weightFactor, bodyPart: "chest", completed: false },
+        { id: "e6", name: "Overhead Press", sets: 3, reps: 12, weight: 20 + weightFactor, bodyPart: "shoulders", completed: false },
+      ],
+    });
+    plans.push({
+      id: "mm2",
+      name: "Pull Day",
+      dayOfWeek: "Thursday",
+      exercises: [
+        { id: "e7", name: "Deadlift", sets: 4, reps: 8, weight: 60 + weightFactor, bodyPart: "back", completed: false },
+        { id: "e8", name: "Pull-ups", sets: 3, reps: 10, weight: 0, bodyPart: "back", completed: false },
+      ],
+    });
+  }
+
+  return plans;
 }

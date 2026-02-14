@@ -1,11 +1,12 @@
 "use client"
 
-import { useExercisePlans, getTodaysPlan } from "@/lib/store"
+import { useExercisePlans, getTodaysPlan, defaultProfile } from "@/lib/store"
 import { CheckCircle2, Circle, Dumbbell } from "lucide-react"
 import { cn } from "@/lib/utils"
 
+
 export function TodaysWorkout() {
-  const { plans, toggleExercise } = useExercisePlans()
+  const { plans, toggleExercise } = useExercisePlans(defaultProfile)
   const todaysPlan = getTodaysPlan(plans)
 
   if (!todaysPlan) {
